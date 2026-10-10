@@ -10,6 +10,9 @@ function read(name: string, fallback: string): string {
 export const env = {
   isCI: !!process.env.CI,
   baseUrl: read('BASE_URL', 'http://localhost:8000'),
+  /** Overridable so the defect lab never overwrites the normal reports. */
+  reportDir: read('PW_REPORT_DIR', 'playwright-report'),
+  resultsDir: read('PW_RESULTS_DIR', 'test-results'),
   /** Read-only database checks. Points at the same database the app under test uses. */
   databaseUrl: read('AUTOMATION_DATABASE_URL', 'postgresql://qa_commerce:qa_commerce_local@localhost:5433/qa_commerce'),
   adminEmail: read('SEED_ADMIN_EMAIL', 'admin@qa-commerce.test'),

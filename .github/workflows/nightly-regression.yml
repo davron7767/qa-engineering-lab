@@ -94,3 +94,45 @@ jobs:
       - name: Tear down containers and volumes
         if: always()
         run: docker compose down --volumes --remove-orphans
+
+  defect-lab:
+    name: Defect lab (suites must detect every seeded defect)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - name: Start PostgreSQL and the application
+        run: docker compose up --build --detach --wait --wait-timeout 180
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: requirements*.txt
+      - name: Install Python dependencies
+        run: pip install -r requirements-dev.txt
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: automation/package-lock.json
+      - name: Install automation dependencies
+        working-directory: automation
+        run: npm ci
+
+      # Each defect runs in a temporary app process on port 8001; the stack on 8000 is untouched.
+      - name: Run every defect with control runs
+        run: python scripts/defect_lab.py --all --with-control
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: defect-lab-reports
+          path: |
+            reports/defect-lab/
+            automation/defect-lab-report/
+          retention-days: 14
+          if-no-files-found: ignore
+      - name: Tear down containers and volumes
+        if: always()
+        run: docker compose down --volumes --remove-orphans

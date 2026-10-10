@@ -20,6 +20,8 @@ node_modules/
 automation/test-results/
 automation/playwright-report/
 automation/blob-report/
+automation/defect-lab-report/
+automation/defect-lab-results/
 automation/.cache/
 
 # Backend test reports
