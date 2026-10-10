@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "login.schema.json",
+  "title": "LoginResponse",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["access_token", "token_type", "expires_at", "user"],
+  "properties": {
+    "access_token": { "type": "string", "minLength": 32 },
+    "token_type": { "const": "bearer" },
+    "expires_at": { "type": "string", "format": "date-time" },
+    "user": { "$ref": "user.schema.json" }
+  }
+}

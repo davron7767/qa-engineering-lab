@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "error.schema.json",
+  "title": "ErrorResponse",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["error"],
+  "properties": {
+    "error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "message", "details", "request_id"],
+      "properties": {
+        "code": { "type": "string", "pattern": "^[A-Z][A-Z_]+$" },
+        "message": { "type": "string", "minLength": 1 },
+        "details": { "type": "array", "items": { "type": "object" } },
+        "request_id": { "type": ["string", "null"] }
+      }
+    }
+  }
+}

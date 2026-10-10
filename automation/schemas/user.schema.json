@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "user.schema.json",
+  "title": "User",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "email", "full_name", "role", "customer_ref"],
+  "properties": {
+    "id": { "type": "integer", "minimum": 1 },
+    "email": { "type": "string", "format": "email" },
+    "full_name": { "type": "string", "minLength": 1 },
+    "role": { "enum": ["customer", "admin"] },
+    "customer_ref": { "type": "string", "pattern": "^CUST-\\d{6}$" }
+  }
+}

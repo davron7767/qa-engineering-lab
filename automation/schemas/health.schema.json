@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "health.schema.json",
+  "title": "Readiness",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["status", "database", "version", "environment"],
+  "properties": {
+    "status": { "enum": ["ok", "unavailable"] },
+    "database": { "enum": ["ok", "unavailable"] },
+    "version": { "type": "string" },
+    "environment": { "enum": ["development", "test", "production"] }
+  }
+}

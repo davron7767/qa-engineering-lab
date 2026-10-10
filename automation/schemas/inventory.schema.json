@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "inventory.schema.json",
+  "title": "Inventory",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["product_id", "sku", "available", "in_stock", "updated_at"],
+  "properties": {
+    "product_id": { "type": "integer", "minimum": 1 },
+    "sku": { "type": "string" },
+    "available": { "type": "integer", "minimum": 0 },
+    "in_stock": { "type": "boolean" },
+    "updated_at": { "type": "string", "format": "date-time" }
+  }
+}

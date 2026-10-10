@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "order-page.schema.json",
+  "title": "OrderPage",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["items", "page", "page_size", "total", "pages"],
+  "properties": {
+    "items": { "type": "array", "items": { "$ref": "order.schema.json" } },
+    "page": { "type": "integer", "minimum": 1 },
+    "page_size": { "type": "integer", "minimum": 1, "maximum": 100 },
+    "total": { "type": "integer", "minimum": 0 },
+    "pages": { "type": "integer", "minimum": 0 }
+  }
+}

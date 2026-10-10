@@ -1,0 +1,8 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "money.schema.json",
+  "title": "Money",
+  "description": "Decimal string with exactly two fractional digits; never a JSON number.",
+  "type": "string",
+  "pattern": "^\\d+\\.\\d{2}$"
+}

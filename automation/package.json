@@ -1,0 +1,35 @@
+{
+  "name": "qa-commerce-automation",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Playwright API, UI and end-to-end tests for QA Commerce",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "playwright test --project=api --project=regression --project=chromium",
+    "test:api": "playwright test --project=api",
+    "test:regression": "playwright test --project=regression",
+    "test:ui": "playwright test --project=chromium --grep-invert @e2e",
+    "test:e2e": "playwright test --project=chromium --grep @e2e",
+    "test:smoke": "playwright test --project=api --project=chromium --grep @smoke",
+    "test:nightly": "playwright test",
+    "report": "playwright show-report",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . && prettier --check .",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@playwright/test": "1.64.0",
+    "@types/node": "24.19.2",
+    "@types/pg": "8.23.1",
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1",
+    "eslint": "10.12.0",
+    "pg": "8.23.1",
+    "prettier": "3.9.10",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.71.1"
+  }
+}
