@@ -1,0 +1,137 @@
+name: Pull request
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: '3.12'
+  NODE_VERSION: '24'
+
+jobs:
+  static-checks-and-unit-tests:
+    name: Lint, type-check and unit tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: requirements*.txt
+      - name: Install Python dependencies
+        run: pip install -r requirements-dev.txt
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: automation/package-lock.json
+      - name: Install automation dependencies
+        working-directory: automation
+        run: npm ci
+
+      - name: Python lint and format check
+        run: |
+          ruff check .
+          ruff format --check .
+      - name: TypeScript lint, format and type check
+        working-directory: automation
+        run: |
+          npm run lint
+          npm run typecheck
+
+      - name: Backend unit tests
+        run: pytest backend-tests/unit --junitxml=reports/backend-unit.xml
+
+      - name: Job summary
+        if: always()
+        run: python scripts/junit_summary.py "Backend unit tests" reports/backend-unit.xml >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: backend-unit-report
+          path: reports/
+          if-no-files-found: ignore
+
+  integration-and-automation:
+    name: Integration, API, UI and e2e tests
+    needs: static-checks-and-unit-tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      CI: 'true'
+      TEST_DATABASE_URL: postgresql+psycopg://qa_commerce:qa_commerce_local@localhost:5433/qa_commerce_test
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Start PostgreSQL and the application
+        run: docker compose up --build --detach --wait --wait-timeout 180
+      - name: Wait for application readiness
+        run: bash scripts/wait-for-health.sh http://localhost:8000/api/v1/health 60
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: requirements*.txt
+      - name: Install Python dependencies
+        run: pip install -r requirements-dev.txt
+      - name: Backend integration tests (dedicated *_test database)
+        run: pytest backend-tests/integration --junitxml=reports/backend-integration.xml
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: automation/package-lock.json
+      - name: Install automation dependencies and Chromium
+        working-directory: automation
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+      - name: Playwright API, regression, UI and e2e tests (Chromium)
+        working-directory: automation
+        run: npm test
+
+      - name: Job summary
+        if: always()
+        run: |
+          python scripts/junit_summary.py "PR test results" \
+            reports/backend-integration.xml automation/test-results/junit.xml >> "$GITHUB_STEP_SUMMARY"
+      - name: Collect container logs
+        if: always()
+        run: |
+          mkdir -p reports
+          docker compose ps > reports/compose-ps.txt
+          docker compose logs --no-color > reports/compose-logs.txt
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: playwright-report
+          path: automation/playwright-report/
+          retention-days: 14
+          if-no-files-found: ignore
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: test-results-and-logs
+          path: |
+            automation/test-results/
+            reports/
+          retention-days: 14
+          if-no-files-found: ignore
+      - name: Tear down containers and volumes
+        if: always()
+        run: docker compose down --volumes --remove-orphans

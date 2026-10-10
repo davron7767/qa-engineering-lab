@@ -1,0 +1,96 @@
+name: Nightly regression
+
+on:
+  schedule:
+    - cron: '0 3 * * *' # 03:00 UTC daily
+  workflow_dispatch:
+    inputs:
+      repeat-concurrency:
+        description: 'How many times to repeat the @concurrency tests (flakiness detection)'
+        type: number
+        default: 10
+        required: true
+
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: '3.12'
+  NODE_VERSION: '24'
+  CI: 'true'
+  TEST_DATABASE_URL: postgresql+psycopg://qa_commerce:qa_commerce_local@localhost:5433/qa_commerce_test
+
+jobs:
+  full-regression:
+    name: Full regression (all browsers)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Start PostgreSQL and the application
+        run: docker compose up --build --detach --wait --wait-timeout 180
+      - name: Wait for application readiness
+        run: bash scripts/wait-for-health.sh http://localhost:8000/api/v1/health 60
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: requirements*.txt
+      - name: Install Python dependencies
+        run: pip install -r requirements-dev.txt
+      - name: Backend unit and integration tests with coverage
+        run: >
+          pytest backend-tests
+          --cov=app --cov-report=term --cov-report=xml:reports/coverage.xml
+          --junitxml=reports/backend-all.xml
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: automation/package-lock.json
+      - name: Install automation dependencies and all browsers
+        working-directory: automation
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium firefox webkit
+      - name: Playwright - every project (API, regression, Chromium, Firefox, WebKit)
+        working-directory: automation
+        run: npm run test:nightly
+      - name: Preserve full-run reports
+        if: always()
+        working-directory: automation
+        run: |
+          mkdir -p ../reports/full-run
+          cp -r playwright-report test-results ../reports/full-run/ 2>/dev/null || true
+      - name: Playwright - repeat concurrency tests to surface intermittent races
+        if: always()
+        working-directory: automation
+        run: >
+          npx playwright test --project=regression --grep @concurrency
+          --repeat-each=${{ inputs.repeat-concurrency || 10 }}
+
+      - name: Job summary
+        if: always()
+        run: |
+          python scripts/junit_summary.py "Nightly regression" \
+            reports/backend-all.xml reports/full-run/test-results/junit.xml \
+            automation/test-results/junit.xml >> "$GITHUB_STEP_SUMMARY"
+      - name: Collect container logs
+        if: always()
+        run: docker compose logs --no-color > reports/compose-logs.txt
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: nightly-reports
+          path: |
+            reports/
+            automation/playwright-report/
+            automation/test-results/
+          retention-days: 30
+          if-no-files-found: ignore
+      - name: Tear down containers and volumes
+        if: always()
+        run: docker compose down --volumes --remove-orphans
