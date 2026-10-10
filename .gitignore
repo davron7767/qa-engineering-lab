@@ -1,0 +1,34 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+coverage.xml
+htmlcov/
+*.egg-info/
+
+# Node / Playwright
+node_modules/
+automation/test-results/
+automation/playwright-report/
+automation/blob-report/
+automation/.cache/
+
+# Backend test reports
+reports/
+
+# Local tooling (portable PostgreSQL, actionlint, logs)
+.local/
+
+# Editors / OS
+.idea/
+.DS_Store
+Thumbs.db

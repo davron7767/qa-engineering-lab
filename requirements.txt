@@ -1,0 +1,12 @@
+# Runtime dependencies for the QA Commerce application (pinned for reproducible builds).
+# Update procedure: see README.md -> "Updating dependencies".
+fastapi==0.143.0
+uvicorn==0.54.0
+sqlalchemy==2.1.4
+alembic==1.20.0
+psycopg[binary]==3.3.6
+pydantic==2.14.0
+pydantic-settings==2.15.0
+jinja2==3.1.6
+python-multipart==0.0.32
+argon2-cffi==25.1.0

@@ -1,0 +1,45 @@
+# QA Commerce local lab: PostgreSQL + the application.
+# Every default below is a local-only placeholder; override via .env (see .env.example).
+name: qa-engineering-lab
+
+services:
+  db:
+    image: postgres:17.9-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-qa_commerce}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-qa_commerce_local}
+      POSTGRES_DB: ${POSTGRES_DB:-qa_commerce}
+    ports:
+      # Published on 5433 by default so it never collides with a host PostgreSQL on 5432.
+      - "${POSTGRES_HOST_PORT:-5433}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # Creates the dedicated qa_commerce_test database on first initialisation.
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  app:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-qa_commerce}:${POSTGRES_PASSWORD:-qa_commerce_local}@db:5432/${POSTGRES_DB:-qa_commerce}
+      SECRET_KEY: ${SECRET_KEY:-local-dev-only-change-me-0123456789abcdef}
+      SESSION_TTL_MINUTES: ${SESSION_TTL_MINUTES:-60}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      SEED_ON_STARTUP: ${SEED_ON_STARTUP:-true}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-Admin#Local2024}
+      SEED_CUSTOMER_PASSWORD: ${SEED_CUSTOMER_PASSWORD:-Customer#Local2024}
+      ENABLE_TEST_HOOKS: ${ENABLE_TEST_HOOKS:-true}
+      DEFECT_MODE: ${DEFECT_MODE:-}
+    ports:
+      - "${APP_HOST_PORT:-8000}:8000"
+
+volumes:
+  pgdata:

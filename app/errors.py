@@ -1,0 +1,141 @@
+"""Domain errors and the single JSON error envelope used by every API response.
+
+Envelope:
+    {"error": {"code": "...", "message": "...", "details": [...], "request_id": "..."}}
+"""
+
+from typing import Any
+
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
+
+class AppError(Exception):
+    """Base class for expected, client-facing errors."""
+
+    status_code = 400
+    code = "BAD_REQUEST"
+
+    def __init__(self, message: str, details: list[dict[str, Any]] | None = None) -> None:
+        super().__init__(message)
+        self.message = message
+        self.details = details or []
+
+
+class AuthenticationRequired(AppError):
+    status_code = 401
+    code = "AUTHENTICATION_REQUIRED"
+
+
+class InvalidCredentials(AppError):
+    status_code = 401
+    code = "INVALID_CREDENTIALS"
+
+
+class Forbidden(AppError):
+    status_code = 403
+    code = "FORBIDDEN"
+
+
+class NotFound(AppError):
+    status_code = 404
+    code = "NOT_FOUND"
+
+
+class ProductNotFound(NotFound):
+    code = "PRODUCT_NOT_FOUND"
+
+
+class OrderNotFound(NotFound):
+    code = "ORDER_NOT_FOUND"
+
+
+class UnknownProduct(AppError):
+    """An order references a product id that does not exist."""
+
+    status_code = 400
+    code = "UNKNOWN_PRODUCT"
+
+
+class ProductInactive(AppError):
+    status_code = 400
+    code = "PRODUCT_INACTIVE"
+
+
+class InsufficientInventory(AppError):
+    status_code = 409
+    code = "INSUFFICIENT_INVENTORY"
+
+
+class IdempotencyKeyReused(AppError):
+    status_code = 409
+    code = "IDEMPOTENCY_KEY_REUSED"
+
+
+class OrderNotCancellable(AppError):
+    status_code = 409
+    code = "ORDER_NOT_CANCELLABLE"
+
+
+class DuplicateSku(AppError):
+    status_code = 409
+    code = "SKU_ALREADY_EXISTS"
+
+
+class DuplicateEmail(AppError):
+    status_code = 409
+    code = "EMAIL_ALREADY_EXISTS"
+
+
+def error_body(
+    request: Request, code: str, message: str, details: list[dict[str, Any]] | None = None
+) -> dict[str, Any]:
+    return {
+        "error": {
+            "code": code,
+            "message": message,
+            "details": details or [],
+            "request_id": getattr(request.state, "request_id", None),
+        }
+    }
+
+
+_HTTP_CODES = {
+    401: "AUTHENTICATION_REQUIRED",
+    403: "FORBIDDEN",
+    404: "NOT_FOUND",
+    405: "METHOD_NOT_ALLOWED",
+}
+
+
+def register_error_handlers(app: FastAPI) -> None:
+    @app.exception_handler(AppError)
+    async def _app_error(request: Request, exc: AppError) -> JSONResponse:
+        headers = {"WWW-Authenticate": "Bearer"} if exc.status_code == 401 else None
+        return JSONResponse(
+            error_body(request, exc.code, exc.message, exc.details),
+            status_code=exc.status_code,
+            headers=headers,
+        )
+
+    @app.exception_handler(RequestValidationError)
+    async def _validation_error(request: Request, exc: RequestValidationError) -> JSONResponse:
+        details = [
+            {"loc": list(err["loc"]), "msg": err["msg"], "type": err["type"]}
+            for err in exc.errors()
+        ]
+        return JSONResponse(
+            error_body(request, "VALIDATION_ERROR", "Request validation failed", details),
+            status_code=422,
+        )
+
+    @app.exception_handler(StarletteHTTPException)
+    async def _http_error(request: Request, exc: StarletteHTTPException) -> JSONResponse:
+        code = _HTTP_CODES.get(exc.status_code, "HTTP_ERROR")
+        return JSONResponse(
+            error_body(request, code, str(exc.detail)),
+            status_code=exc.status_code,
+            headers=getattr(exc, "headers", None),
+        )

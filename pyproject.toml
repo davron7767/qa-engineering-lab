@@ -1,0 +1,27 @@
+[project]
+name = "qa-commerce"
+version = "1.0.0"
+description = "QA Commerce - a small order-management application used as a test-automation target."
+requires-python = ">=3.12,<3.15"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = ["automation", ".local"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S", "SIM", "RUF"]
+ignore = [
+    "B008",  # FastAPI dependency injection uses calls in defaults by design
+]
+
+[tool.ruff.lint.per-file-ignores]
+"backend-tests/**" = ["S101", "S105", "S106"]  # asserts and fixture passwords are expected in tests
+"app/config.py" = ["S105"]  # documented local-only seed defaults
+
+[tool.pytest.ini_options]
+testpaths = ["backend-tests"]
+addopts = "-ra --strict-markers"
+markers = [
+    "integration: requires the PostgreSQL test database",
+]
