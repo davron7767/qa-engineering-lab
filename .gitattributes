@@ -1,5 +1,6 @@
-* text=auto
-*.sh text eol=lf
+# Keep LF in the working tree on every OS (Prettier/ruff/shell expect it), regardless of
+# core.autocrlf. Windows PowerShell scripts keep CRLF.
+* text=auto eol=lf
 *.ps1 text eol=crlf
-Dockerfile text eol=lf
 *.png binary
+*.zip binary
