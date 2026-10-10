@@ -4,12 +4,15 @@ Envelope:
     {"error": {"code": "...", "message": "...", "details": [...], "request_id": "..."}}
 """
 
+import logging
 from typing import Any
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from starlette.exceptions import HTTPException as StarletteHTTPException
+
+logger = logging.getLogger("qa_commerce.errors")
 
 
 class AppError(Exception):
@@ -131,8 +134,29 @@ def register_error_handlers(app: FastAPI) -> None:
             status_code=422,
         )
 
+    @app.exception_handler(Exception)
+    async def _unexpected(request: Request, exc: Exception) -> JSONResponse:
+        # Imported lazily to avoid a cycle; injected faults get their own code for clarity.
+        from app.faults import InjectedFault
+
+        code = "INJECTED_FAULT" if isinstance(exc, InjectedFault) else "INTERNAL_ERROR"
+        logger.error(
+            "Unhandled %s request_id=%s",
+            type(exc).__name__,
+            getattr(request.state, "request_id", None),
+            exc_info=not isinstance(exc, InjectedFault),
+        )
+        # The response never includes exception text or stack traces.
+        return JSONResponse(
+            error_body(request, code, "An unexpected error occurred"), status_code=500
+        )
+
     @app.exception_handler(StarletteHTTPException)
-    async def _http_error(request: Request, exc: StarletteHTTPException) -> JSONResponse:
+    async def _http_error(request: Request, exc: StarletteHTTPException) -> Response:
+        if exc.status_code == 404 and not request.url.path.startswith("/api/"):
+            from app.web.routes import not_found_page
+
+            return not_found_page(request)
         code = _HTTP_CODES.get(exc.status_code, "HTTP_ERROR")
         return JSONResponse(
             error_body(request, code, str(exc.detail)),

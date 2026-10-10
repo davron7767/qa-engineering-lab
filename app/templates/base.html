@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}QA Commerce{% endblock %} · QA Commerce</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/products">QA Commerce</a>
+    <nav aria-label="Main">
+      <ul>
+        <li><a href="/products">Products</a></li>
+        {% if user %}
+        <li><a href="/orders/new">New order</a></li>
+        <li><a href="/orders">Order history</a></li>
+        {% endif %}
+      </ul>
+    </nav>
+    <div class="session">
+      {% if user %}
+      <span data-testid="current-user">Signed in as {{ user.full_name }}</span>
+      <form method="post" action="/logout" class="inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button type="submit" class="link-button">Log out</button>
+      </form>
+      {% else %}
+      <a href="/login">Log in</a>
+      {% endif %}
+    </div>
+  </header>
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="site-footer">Fictional demo application for test automation. Synthetic data only.</footer>
+</body>
+</html>

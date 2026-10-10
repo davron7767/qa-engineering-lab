@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}Not found{% endblock %}
+{% block content %}
+<h1>{{ what or "Page" }} not found</h1>
+<p>The {{ (what or "page") | lower }} you requested does not exist or is not available to you.</p>
+<p><a href="/products">Go to products</a></p>
+{% endblock %}

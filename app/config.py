@@ -25,6 +25,8 @@ class Settings(BaseSettings):
     database_url: str = (
         "postgresql+psycopg://qa_commerce:qa_commerce_local@localhost:5433/qa_commerce"
     )
+    # Only used by the backend integration tests and `python -m app.db.reset`.
+    test_database_url: str | None = None
     secret_key: str = Field(default=PLACEHOLDER_SECRET, min_length=32)
     session_ttl_minutes: int = Field(default=60, ge=1, le=24 * 60)
     cookie_secure: bool = False

@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}New order{% endblock %}
+{% block content %}
+<h1>New order</h1>
+{% if errors %}
+<div class="error" role="alert">
+  <ul>{% for message in errors %}<li>{{ message }}</li>{% endfor %}</ul>
+</div>
+{% endif %}
+<form method="post" action="/orders" novalidate>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <input type="hidden" name="idempotency_key" value="{{ idempotency_key }}">
+  <table>
+    <caption class="visually-hidden">Enter a quantity for each product you want to order</caption>
+    <thead>
+      <tr><th scope="col">Product</th><th scope="col">Price</th><th scope="col">Available</th><th scope="col">Quantity</th></tr>
+    </thead>
+    <tbody>
+      {% for product in products %}
+      <tr>
+        <td>{{ product.name }} <span class="muted">({{ product.sku }})</span></td>
+        <td>{{ product.price | money }}</td>
+        <td>{{ product.inventory }}</td>
+        <td>
+          <label class="visually-hidden" for="qty_{{ product.id }}">Quantity for {{ product.name }}</label>
+          <input id="qty_{{ product.id }}" name="qty_{{ product.id }}" type="number" min="0" max="{{ max_quantity }}" step="1"
+                 value="{{ values.get('qty_' ~ product.id, '') }}" class="qty">
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <button type="submit">Place order</button>
+</form>
+{% endblock %}

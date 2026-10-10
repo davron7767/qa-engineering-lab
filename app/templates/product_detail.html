@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}{{ product.name }}{% endblock %}
+{% block content %}
+<article class="card">
+  <h1>{{ product.name }}</h1>
+  <dl class="facts">
+    <dt>SKU</dt><dd>{{ product.sku }}</dd>
+    <dt>Price</dt><dd data-testid="product-price">{{ product.price | money }}</dd>
+    <dt>Available</dt><dd data-testid="product-inventory">{{ product.inventory }}</dd>
+    <dt>Status</dt><dd>{{ "Active" if product.is_active else "Unavailable" }}</dd>
+  </dl>
+  <p>{{ product.description }}</p>
+
+  {% if not product.is_active %}
+  <p class="notice" role="status">This product is no longer available for ordering.</p>
+  {% elif product.inventory == 0 %}
+  <p class="notice" role="status">This product is out of stock.</p>
+  {% elif user %}
+  <form method="post" action="/orders" class="order-quick">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <input type="hidden" name="idempotency_key" value="{{ idempotency_key }}">
+    <label for="qty_{{ product.id }}">Quantity</label>
+    <input id="qty_{{ product.id }}" name="qty_{{ product.id }}" type="number" min="1" max="{{ max_quantity }}" step="1" value="1">
+    <button type="submit">Place order</button>
+  </form>
+  {% else %}
+  <p><a href="/login?next=/products/{{ product.id }}">Log in to order</a></p>
+  {% endif %}
+</article>
+<p><a href="/products">Back to products</a></p>
+{% endblock %}

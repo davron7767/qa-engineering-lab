@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Order {{ order.id }}{% endblock %}
+{% block content %}
+{% if placed %}
+<p class="success" role="status">Order confirmed. Thank you for your order.</p>
+{% endif %}
+{% if cancelled %}
+<p class="notice" role="status">Order cancelled. Items were returned to inventory.</p>
+{% endif %}
+{% if error %}
+<p class="error" role="alert">{{ error }}</p>
+{% endif %}
+<article class="card">
+  <h1>Order details</h1>
+  <dl class="facts">
+    <dt>Order number</dt><dd data-testid="order-id">{{ order.id }}</dd>
+    <dt>Customer</dt><dd>{{ order.customer_ref }}</dd>
+    <dt>Status</dt><dd data-testid="order-status">{{ order.status | capitalize }}</dd>
+    <dt>Placed</dt><dd>{{ order.created_at.strftime("%Y-%m-%d %H:%M UTC") }}</dd>
+  </dl>
+  <table>
+    <caption class="visually-hidden">Order line items</caption>
+    <thead>
+      <tr><th scope="col">Product</th><th scope="col">SKU</th><th scope="col">Quantity</th><th scope="col">Unit price</th><th scope="col">Line total</th></tr>
+    </thead>
+    <tbody>
+      {% for item in order.items %}
+      <tr data-testid="order-line" data-sku="{{ item.sku }}">
+        <td>{{ item.product_name }}</td>
+        <td>{{ item.sku }}</td>
+        <td>{{ item.quantity }}</td>
+        <td>{{ item.unit_price | money }}</td>
+        <td>{{ item.line_total | money }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr><th scope="row" colspan="4">Total</th><td data-testid="order-total">{{ order.total | money }}</td></tr>
+    </tfoot>
+  </table>
+  {% if order.status == "confirmed" %}
+  <form method="post" action="/orders/{{ order.id }}/cancel">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <button type="submit" class="secondary">Cancel order</button>
+  </form>
+  {% endif %}
+</article>
+<p><a href="/orders">Back to order history</a></p>
+{% endblock %}

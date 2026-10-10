@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Products{% endblock %}
+{% block content %}
+<h1>Products</h1>
+<form method="get" action="/products" role="search" class="search">
+  <label for="q">Search products</label>
+  <input id="q" name="q" type="search" value="{{ q }}" maxlength="100">
+  <button type="submit">Search</button>
+</form>
+{% if products %}
+<table>
+  <caption class="visually-hidden">Product catalogue</caption>
+  <thead>
+    <tr><th scope="col">Product</th><th scope="col">SKU</th><th scope="col">Price</th><th scope="col">Availability</th></tr>
+  </thead>
+  <tbody>
+    {% for product in products %}
+    <tr data-testid="product-row" data-sku="{{ product.sku }}">
+      <td><a href="/products/{{ product.id }}">{{ product.name }}</a></td>
+      <td>{{ product.sku }}</td>
+      <td>{{ product.price | money }}</td>
+      <td>
+        {% if not product.is_active %}<span class="badge muted">Unavailable</span>
+        {% elif product.inventory == 0 %}<span class="badge warn">Out of stock</span>
+        {% else %}<span class="badge ok">{{ product.inventory }} in stock</span>{% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p role="status">No products match your search.</p>
+{% endif %}
+{% endblock %}

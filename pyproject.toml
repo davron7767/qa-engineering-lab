@@ -21,6 +21,7 @@ ignore = [
 
 [tool.pytest.ini_options]
 testpaths = ["backend-tests"]
+pythonpath = [".", "backend-tests/integration"]
 addopts = "-ra --strict-markers"
 markers = [
     "integration: requires the PostgreSQL test database",

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Order history{% endblock %}
+{% block content %}
+<h1>Order history</h1>
+{% if orders %}
+<table>
+  <caption class="visually-hidden">Your orders, newest first</caption>
+  <thead>
+    <tr><th scope="col">Order</th><th scope="col">Placed</th><th scope="col">Items</th><th scope="col">Status</th><th scope="col">Total</th></tr>
+  </thead>
+  <tbody>
+    {% for order in orders %}
+    <tr data-testid="order-row" data-order-id="{{ order.id }}">
+      <td><a href="/orders/{{ order.id }}">{{ order.id | string | truncate(8, True, "") }}</a></td>
+      <td>{{ order.created_at.strftime("%Y-%m-%d %H:%M") }}</td>
+      <td>{{ order.items | sum(attribute="quantity") }}</td>
+      <td>{{ order.status | capitalize }}</td>
+      <td>{{ order.total | money }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<nav aria-label="Pagination" class="pagination">
+  {% if page > 1 %}<a href="/orders?page={{ page - 1 }}" rel="prev">Previous page</a>{% endif %}
+  <span>Page {{ page }} of {{ pages }}</span>
+  {% if page < pages %}<a href="/orders?page={{ page + 1 }}" rel="next">Next page</a>{% endif %}
+</nav>
+{% else %}
+<p role="status">You have not placed any orders yet.</p>
+{% endif %}
+{% endblock %}
