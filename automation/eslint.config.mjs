@@ -23,4 +23,11 @@ export default tseslint.config(
       '@typescript-eslint/no-floating-promises': 'off',
     },
   },
+  {
+    // Node scripts; the page.evaluate callback also runs in the browser.
+    files: ['tools/**/*.mjs'],
+    languageOptions: {
+      globals: { process: 'readonly', console: 'readonly', document: 'readonly', NodeFilter: 'readonly' },
+    },
+  },
 );
