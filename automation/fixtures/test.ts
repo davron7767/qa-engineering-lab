@@ -40,13 +40,24 @@ interface WorkerFixtures {
 
 export const test = base.extend<TestFixtures, WorkerFixtures>({
   // One admin session per worker keeps the suite fast and avoids a login per test.
+  // Login and logout each use a short-lived request context: a context held open for the whole
+  // worker would reuse a keep-alive socket the server may already be closing, which surfaced as
+  // an intermittent ECONNRESET on logout behind Docker Desktop's port forwarding.
   adminToken: [
     async ({ playwright }, use) => {
-      const context = await playwright.request.newContext({ baseURL: env.baseUrl });
-      const admin = await new ApiClient(context).loginAs(env.adminEmail, env.adminPassword);
-      await use(admin.authToken as string);
-      await admin.logout();
-      await context.dispose();
+      const withContext = async <T>(fn: (api: ApiClient) => Promise<T>): Promise<T> => {
+        const context = await playwright.request.newContext({ baseURL: env.baseUrl });
+        try {
+          return await fn(new ApiClient(context));
+        } finally {
+          await context.dispose();
+        }
+      };
+      const token = await withContext(
+        async (api) => (await api.loginAs(env.adminEmail, env.adminPassword)).authToken as string,
+      );
+      await use(token);
+      await withContext((api) => api.as(token).logout());
     },
     { scope: 'worker' },
   ],

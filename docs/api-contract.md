@@ -48,7 +48,7 @@ Every error, including validation errors, 404s for unknown routes and unexpected
 | 409 | `ORDER_NOT_CANCELLABLE` | Cancelling an order that is not `confirmed` |
 | 409 | `SKU_ALREADY_EXISTS` / `EMAIL_ALREADY_EXISTS` | Uniqueness conflicts |
 | 422 | `VALIDATION_ERROR` | Schema or parameter validation failed. `details`: `[{loc, msg, type}]` (FastAPI convention). |
-| 500 | `INTERNAL_ERROR` | Unexpected failure. No exception text or stack trace is returned. |
+| 500 | `INTERNAL_ERROR` | Unexpected failure. No exception text or stack trace is returned. Both 500 codes send `Connection: close`, because the server drops the connection after an unhandled error. |
 | 500 | `INJECTED_FAULT` | Deliberate failure from the opt-in test hook (see below) |
 
 ## Endpoints

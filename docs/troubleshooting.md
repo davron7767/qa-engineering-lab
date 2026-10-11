@@ -5,6 +5,7 @@
 | Symptom | Likely cause | Fix |
 |---|---|---|
 | `docker: command not found` / Compose errors | Docker Desktop not installed or not running | Install and start Docker Desktop (needs WSL 2). Or use the Docker-free path: `.\scripts\local-postgres.ps1 start` then `.\scripts\local-app.ps1 start`. |
+| Every `docker` command returns `500 Internal Server Error ... dockerDesktopLinuxEngine`, although Docker Desktop is open | WSL 2 is not installed, so Docker Desktop's Linux engine never starts (its log says `no virtualization available`) | In an admin PowerShell run `wsl --install --no-distribution`, restart Windows, start Docker Desktop. `docker info` must print a `Server Version`. |
 | `port is already allocated` for 5433 or 8000 | Another PostgreSQL or app is using the port | Set `POSTGRES_HOST_PORT` / `APP_HOST_PORT` in `.env` and update `DATABASE_URL`, `TEST_DATABASE_URL`, `BASE_URL`, `AUTOMATION_DATABASE_URL` to match |
 | `/api/v1/health` returns 503 | App is up but the database is unreachable | `docker compose ps` (is `db` healthy?) or `.\scripts\local-postgres.ps1 status`. Check `DATABASE_URL`. |
 | App container restarts | Migration or config error at start | `docker compose logs app`. A `SECRET_KEY must be changed` error means `APP_ENV=production` with the placeholder secret. |
@@ -22,6 +23,7 @@
 | DB probe errors (`ECONNREFUSED`, auth failed) in e2e or regression tests | `AUTOMATION_DATABASE_URL` doesn't point at the app's database | Default: `postgresql://qa_commerce:qa_commerce_local@localhost:5433/qa_commerce` |
 | pytest: "TEST_DATABASE_URL is not set" | Missing `.env` or variable | `Copy-Item .env.example .env` |
 | pytest: "Refusing to reset database" | `TEST_DATABASE_URL` points at a database not ending in `_test` | Intentional safeguard. Point it at `qa_commerce_test`. |
+| Intermittent `socket hang up (ECONNRESET)` on an API call | A keep-alive socket was reused after the server closed it. The known cause (unhandled-error responses not saying `Connection: close`) is fixed and covered by `atomicity.spec.ts`. | Find the previous request on the same request context in the trace. A 500 without `Connection: close` points to a regression of that fix. |
 | Browser tests: "Executable doesn't exist" | Playwright browsers not installed | `cd automation; npx playwright install chromium` (add `firefox webkit` for the nightly set) |
 
 ## Investigating a failed test

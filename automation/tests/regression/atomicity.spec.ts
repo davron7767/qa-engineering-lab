@@ -36,4 +36,15 @@ test.describe('Failure after partial processing', { tag: '@regression' }, () => 
     expect(text).not.toContain('sqlalchemy');
     expect((await json<{ error: { message: string } }>(response)).error.message).toBe('An unexpected error occurred');
   });
+
+  test('500 responses tell keep-alive clients the connection is closing', async ({ customer, testData }) => {
+    const product = await testData.createProduct();
+    const response = await customer.api.createOrder(
+      { items: [{ product_id: product.id, quantity: 1 }] },
+      { fault: 'after_order_insert' },
+    );
+    expect(response.status()).toBe(500);
+    // Without this header, the next request on the pooled socket can fail with ECONNRESET.
+    expect(response.headers()['connection'], 'unhandled errors close the connection').toBe('close');
+  });
 });

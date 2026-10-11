@@ -195,12 +195,12 @@ Counts come from `pytest --collect-only` and `playwright test --list` on the cur
 | Backend unit | 105 | 4 | Decimal pricing, rule precedence, strict schemas, error envelope, CSRF, open redirects, production guards |
 | Backend integration | 76 | 3 | Persistence, rollback via fault injection, DB constraints, threaded race tests, idempotency, auth/session expiry |
 | Playwright API | 62 | 4 | Contract and schema checks, auth failures, validation (11 malformed-body cases), state after every rejection |
-| Playwright regression | 42 | 4 | Boundaries, 6 decimal cases, idempotency, atomicity (API **and** DB), HTTP-level concurrency |
+| Playwright regression | 43 | 4 | Boundaries, 6 decimal cases, idempotency, atomicity (API **and** DB), HTTP-level concurrency |
 | Playwright UI | 26 per browser | 3 | Login and logout, redirects, catalogue, ordering, validation messages, history pagination, cancellation |
 | Playwright e2e | 3 per browser | 2 | API→UI→DB with cancellation; UI→API→DB; form re-submission replay |
 
-The PR gate runs 181 backend tests and 133 Playwright tests (UI and e2e on Chromium). The nightly
-run adds Firefox and WebKit (191 Playwright tests in total), repeats the concurrency tests 10×, and
+The PR gate runs 181 backend tests and 134 Playwright tests (UI and e2e on Chromium). The nightly
+run adds Firefox and WebKit (192 Playwright tests in total), repeats the concurrency tests 10×, and
 runs the defect lab. In the most recent local run of each suite, all of these passed, including all
 three browsers.
 
@@ -270,12 +270,12 @@ that only passes on retry is reported as a failure, never hidden.
 
 ## Known limitations
 
-- **Docker verification status:** this repository was built on a machine without Docker Desktop.
-  Everything (all suites, the defect lab and the scripts) was verified against the identical
-  PostgreSQL 17.9 version through the Docker-free path. The `Dockerfile` and `docker-compose.yml`
-  are written to the same settings, and the workflow files validate against the GitHub workflow
-  schema, but `docker compose up` and the GitHub Actions runs had not yet been executed at the time
-  of writing. The first CI run will confirm them.
+- **Verification status:** the Docker Compose stack has been verified locally on Windows 11 with
+  Docker Desktop (WSL 2). `docker compose up --build -d` brings up PostgreSQL and the app, and
+  `.\scripts\test-all.ps1` (lint, backend unit and integration, Playwright) passes against it. The
+  defect lab (`scripts/defect_lab.py --all --with-control`) detects every defect using the Compose
+  database. The Docker-free path was verified earlier. The GitHub Actions workflows validate against
+  the GitHub workflow schema but have not yet run on GitHub, so the first CI run will confirm them.
 - Python 3.13 was used locally; Docker and CI use Python 3.12.
 - No products can be deleted (they're retired instead), there's no self-registration, no login rate
   limiting, and no tax, shipping or fulfilment workflow.

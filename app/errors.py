@@ -147,8 +147,13 @@ def register_error_handlers(app: FastAPI) -> None:
             exc_info=not isinstance(exc, InjectedFault),
         )
         # The response never includes exception text or stack traces.
+        # Starlette re-raises after this response so the server can log it, and uvicorn then
+        # closes the connection. Saying so up front stops keep-alive clients from reusing a
+        # socket that is about to close (an intermittent ECONNRESET on their next request).
         return JSONResponse(
-            error_body(request, code, "An unexpected error occurred"), status_code=500
+            error_body(request, code, "An unexpected error occurred"),
+            status_code=500,
+            headers={"Connection": "close"},
         )
 
     @app.exception_handler(StarletteHTTPException)

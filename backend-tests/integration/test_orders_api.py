@@ -128,6 +128,8 @@ class TestRejectedOrdersLeaveNoTrace:
         )
         assert response.status_code == 500
         assert response.json()["error"]["code"] == "INJECTED_FAULT"
+        # The server drops the connection after an unhandled error; clients must be told.
+        assert response.headers["connection"] == "close"
         assert inventory(db, 1) == 25
         assert order_count(db) == 0
 
