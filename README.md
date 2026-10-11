@@ -9,9 +9,9 @@ that proves the suites catch real bugs.
 > QA Commerce is a fictional test target, not a commerce platform. All data is synthetic, and every
 > credential is a local-only placeholder.
 
-<!-- CI badges: after pushing to GitHub, replace OWNER/REPO and uncomment.
-[![Pull request](https://github.com/OWNER/REPO/actions/workflows/pull-request.yml/badge.svg)](https://github.com/OWNER/REPO/actions/workflows/pull-request.yml)
-[![Nightly regression](https://github.com/OWNER/REPO/actions/workflows/nightly-regression.yml/badge.svg)](https://github.com/OWNER/REPO/actions/workflows/nightly-regression.yml)
+[![Pull request](https://github.com/davron7767/qa-engineering-lab/actions/workflows/pull-request.yml/badge.svg)](https://github.com/davron7767/qa-engineering-lab/actions/workflows/pull-request.yml)
+<!-- Uncomment after the first nightly run:
+[![Nightly regression](https://github.com/davron7767/qa-engineering-lab/actions/workflows/nightly-regression.yml/badge.svg)](https://github.com/davron7767/qa-engineering-lab/actions/workflows/nightly-regression.yml)
 -->
 
 ## Contents
@@ -274,8 +274,8 @@ that only passes on retry is reported as a failure, never hidden.
   Docker Desktop (WSL 2). `docker compose up --build -d` brings up PostgreSQL and the app, and
   `.\scripts\test-all.ps1` (lint, backend unit and integration, Playwright) passes against it. The
   defect lab (`scripts/defect_lab.py --all --with-control`) detects every defect using the Compose
-  database. The Docker-free path was verified earlier. The GitHub Actions workflows validate against
-  the GitHub workflow schema but have not yet run on GitHub, so the first CI run will confirm them.
+  database. The Docker-free path was verified earlier. The pull-request workflow has passed on GitHub
+  Actions. The nightly regression workflow has not run on GitHub yet.
 - Python 3.13 was used locally; Docker and CI use Python 3.12.
 - No products can be deleted (they're retired instead), there's no self-registration, no login rate
   limiting, and no tax, shipping or fulfilment workflow.
